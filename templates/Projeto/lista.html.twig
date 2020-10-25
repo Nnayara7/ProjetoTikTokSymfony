@@ -11,8 +11,6 @@
                     <thead>
                     <tr>
                         <th>Nome</th>
-                        <th>Horas Lancadas</th>
-                        <th>Funcionarios</th>
                         <th>Ações</th>
                     </tr>
                     </thead>
@@ -20,12 +18,6 @@
                     {% for projeto in projetos %}
                         <tr>
                             <td><a href="/projeto/edita/{{ projeto.id }}">{{ projeto.nome }}</a></td>
-                            <td>{{ projeto.totalHorasLancadas }}</td>
-                            <td>
-                            {% for funcionario in projeto.funcionarios %}
-                                {{ funcionario }},
-                            {% endfor %}
-                            </td>
                             <td>
                                 <a class="btn btn-danger" href="/projeto/remove/{{ projeto.id }}">remover</a>
                             </td>

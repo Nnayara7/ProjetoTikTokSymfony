@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\EntityManager;
 
 /**
  * @ORM\Entity
@@ -30,14 +31,20 @@ class Funcionario
     private $dataDeEntrada;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Projeto", inversedBy="funcionarios")
+     * @ORM\Column(type="boolean")
      */
-    private $projeto;
-
+    private $boAtivo;
     /**
-     * @ORM\OneToMany(targetEntity="HoraLancada", mappedBy="funcionario")
+     * @ORM\Column(type="string")
      */
-    private $horasLancadas;
+    private $nuCpf;
+
+    private  $entityManager;
+     
+    public function __construct(EntityManager $em) {
+       $this->entityManager = $em;
+    }
+
 
     /**
      * @return mixed
@@ -69,6 +76,21 @@ class Funcionario
     public function setNome($nome)
     {
         $this->nome = $nome;
+    }
+     /**
+     * @return mixed
+     */
+    public function getNuCpf()
+    {
+        return $this->nuCpf;
+    }
+
+    /**
+     * @param mixed $nuCpf
+     */
+    public function setNuCpf($nuCpf)
+    {
+        $this->nuCpf = $nuCpf;
     }
 
     /**
@@ -103,21 +125,22 @@ class Funcionario
         $this->dataDeEntrada = $dataDeEntrada;
     }
 
-    /**
+     /**
      * @return mixed
      */
-    public function getProjeto()
+    public function getBoAtivo()
     {
-        return $this->projeto;
+        return $this->boAtivo;
     }
 
     /**
-     * @param mixed $projeto
+     * @param mixed $boAtivo
      */
-    public function setProjeto($projeto)
+    public function setBoAtivo($boAtivo)
     {
-        $this->projeto = $projeto;
+        $this->boAtivo = $boAtivo;
     }
+
 
     /**
      * @return mixed
@@ -146,5 +169,28 @@ class Funcionario
     public function __toString()
     {
         return $this->getNome();
+    }
+
+    public function updateFuncionario(Funcionario $funcionario) 
+    {
+        $em = $this->entityManager;
+        $qb = $em->createQueryBuilder();
+        $qb->update('App\Entity\Funcionario', 'a')
+        ->set('a.boAtivo', $qb->expr()->literal(!$funcionario->boAtivo))
+        ->where('a.id = ?1')
+        ->setParameter(1, $funcionario->id);
+        $query = $qb->getQuery();
+        return $query->execute(); 
+    }
+
+    public function inserir($data, $em) {
+        $funcionario = new Funcionario($em);
+        $funcionario->setNome($data['nome'], $em);
+        $funcionario->setDataDeNascimento($data['dataDeNascimento']);
+        $funcionario->setDataDeEntrada(new \DateTime());
+        $funcionario->setBoAtivo(true);
+        $funcionario->setNuCpf($data['nuCpf']);
+        $em->persist($funcionario);
+        $em->flush();
     }
 }

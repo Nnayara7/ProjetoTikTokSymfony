@@ -1,7 +1,10 @@
 <?php
 namespace App\Controller;
+use App\Utils\Validate;
 
 use App\Entity\Funcionario;
+use Doctrine\ORM\EntityManager;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -39,18 +42,25 @@ class FuncionarioController extends AbstractController
      */
     public function cria(Request $request)
     {
+        $em = $this->getDoctrine()->getManager();
+        $funcionario = new Funcionario($em);
         $nome = $request->get("nome");
+        $nuCpf = $request->get("nuCpf");
         $dataDeNascimento = new \DateTime($request->get("dataDeNascimento"));
 
-        $funcionario = new Funcionario();
-        $funcionario->setNome($nome);
-        $funcionario->setDataDeNascimento($dataDeNascimento);
-        $funcionario->setDataDeEntrada(new \DateTime());
+        $data = [
+            'nuCpf' => $nuCpf,
+            'nome' => $nome,
+            'dataDeNascimento' => $dataDeNascimento
+        ];
+        $validate = new Validate;
 
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($funcionario);
+        $filled = $validate->ValidateCpf($data);
+        if ($filled != "true") {
+            return new Response($filled);
+        }
+        $funcionario->inserir($data, $em);
         $em->flush();
-
         return $this->redirect("/funcionario/lista");
     }
 
@@ -62,7 +72,7 @@ class FuncionarioController extends AbstractController
         $form = $this->createFormBuilder($funcionario)
             ->add("nome")
             ->add("dataDeNascimento")
-            ->add("projeto")
+            ->add("nuCpf")
             ->getForm();
 
         return $this->render('Funcionario/edita.html.twig',["funcionario" => $funcionario,"form" => $form->createView()]);
@@ -76,7 +86,7 @@ class FuncionarioController extends AbstractController
         $form = $this->createFormBuilder($funcionario)
             ->add("nome")
             ->add("dataDeNascimento")
-            ->add("projeto")
+            ->add("nuCpf")
             ->getForm();
 
         $form->handleRequest($request);
@@ -91,14 +101,13 @@ class FuncionarioController extends AbstractController
     }
 
     /**
-     * @Route("funcionario/remove/{id}")
+     * @Route("funcionario/inativar/{id}")
      */
-    public function remove(Funcionario $funcionario)
+    public function inativar(Funcionario $funcionario)
     {
         $em = $this->getDoctrine()->getManager();
-        $em->remove($funcionario);
-        $em->flush();
-
+        $repositorio = new Funcionario($em);
+        $repositorio->updateFuncionario($funcionario);
         return $this->redirect("/funcionario/lista");
     }
 }
